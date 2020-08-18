@@ -1,0 +1,2 @@
+rootProject.name='NbInjection'
+include ':module'

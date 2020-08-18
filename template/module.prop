@@ -1,0 +1,7 @@
+id=nbinjection
+name=NbInjection
+version=v1
+versionCode=1
+author=canyie
+description=Inject zygote process by replace system native bridge support
+minMagisk=17000
