@@ -13,6 +13,7 @@
 #include "log.h"
 
 NativeBridgeCallbacks NativeBridgeItf;
+void* real_nb_handle_ = nullptr;
 
 static bool fake_initialize(const struct NativeBridgeRuntimeCallbacks* runtime_cbs,
         const char* private_dir, const char* instruction_set) {
@@ -111,16 +112,22 @@ void setup_nb_itf() {
             LOGW("ro.dalvik.vm.native.bridge is not expected to be empty");
         } else if (strcmp(real_nb_filename, "0") != 0) {
             LOGI("The system has real native bridge support, libname %s", real_nb_filename);
-            void* handle = dlopen(real_nb_filename, RTLD_LAZY);
-            if (handle) {
-                void* real_nb_itf = dlsym(handle, "NativeBridgeItf");
+            real_nb_handle_ = dlopen(real_nb_filename, RTLD_LAZY);
+            const char* error;
+            if (real_nb_handle_) {
+                void* real_nb_itf = dlsym(real_nb_handle_, "NativeBridgeItf");
                 if (real_nb_itf) {
                     // sizeof(NativeBridgeCallbacks) maybe changed in other android version
                     memcpy(&NativeBridgeItf, real_nb_itf, sizeof(NativeBridgeCallbacks));
                     return;
                 }
+                error = dlerror();
+                dlclose(real_nb_handle_);
+                real_nb_handle_ = nullptr;
+            } else {
+                error = dlerror();
             }
-            LOGE("Could not setup NativeBridgeItf for real lib %s: %s", real_nb_filename, dlerror());
+            LOGE("Could not setup NativeBridgeItf for real lib %s: %s", real_nb_filename, error);
         }
     }
 
@@ -178,4 +185,10 @@ __attribute__((constructor)) __attribute__((used)) void OnLoad() {
     // Do what you want here
     LOGI("NbInjection loaded in %s process, pid=%d uid=%d", is_zygote() ? "zygote" : "non-zygote", getpid(), getuid());
     setup_nb_itf();
+}
+
+__attribute__((destructor)) __attribute__((used)) void OnUnload() {
+    if (real_nb_handle_) {
+        dlclose(real_nb_handle_);
+    }
 }
