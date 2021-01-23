@@ -4,6 +4,7 @@ This is an example for replace system property "ro.dalvik.vm.native.bridge" to i
 I have tested it on my Google Pixel 3 (Android 10, Magisk 20.4), it seems to be working well;
 but it maybe not compatible with all devices, if you want to use it, please modify the code according to your devices.
 
+About its working principle, you can refer to this Chinese [article](https://blog.canyie.top/2020/08/18/nbinjection/).
 ## Build
 Run gradle task `:module:assembleMagiskRelease` from Android Studio or command line,
 magisk module zip will be saved to module/build/outputs/magisk/.
